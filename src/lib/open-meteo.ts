@@ -49,6 +49,7 @@ export async function geocode(city: string): Promise<GeocodingResult | null> {
     if (cached) return cached
 
     const res = await fetch(`${GEO}?name=${encodeURIComponent(city)}&count=1&language=en&format=json`)
+    if (!res.ok) throw new Error(`Geocoding error: ${res.status} ${res.statusText}`)
     const data = await res.json() as GeocodingResponse
     if (!data.results?.length) return null
 
@@ -91,6 +92,7 @@ export async function fetchWeather(lat: number, lon: number, locationName: strin
     })
 
     const res = await fetch(`${BASE}?${params}`)
+    if (!res.ok) throw new Error(`Open-Meteo error: ${res.status} ${res.statusText}`)
     const raw = await res.json() as OpenMeteoResponse
     const isDay = raw.current.is_day === 1
     const { condition, icon } = resolveCode(raw.current.weather_code, isDay)

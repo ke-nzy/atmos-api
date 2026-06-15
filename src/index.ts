@@ -10,7 +10,8 @@ const PORT = Number(process.env.PORT) || 4003
 
 const app = new Elysia()
     .use(cors())
-    .use(staticPlugin({ assets: "src/public", prefix: "/" }))
+    .use(staticPlugin({ assets: "src/public", prefix: "/static" }))
+    .get("/", () => Bun.file("src/public/index.html"))
     .use(forecastRoute)
     .use(hourlyRoute)
     .use(summaryRoute)

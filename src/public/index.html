@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Atmos API</title>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f9f9f8;
+            --surface: #ffffff;
+            --border: #e5e5e3;
+            --text: #1a1a1a;
+            --muted: #888884;
+            --accent: #2563eb;
+            --green: #16a34a;
+            --red: #dc2626;
+            --code-bg: #f4f4f3;
+            --radius: 10px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            padding: 20px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header h1 {
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        header h1 span {
+            color: var(--accent);
+        }
+
+        header p {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-weight: 500;
+            background: #dbeafe;
+            color: var(--accent);
+        }
+
+        main {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 40px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .card-header:hover {
+            background: #fafaf9;
+        }
+
+        .card-meta {
+            flex: 1;
+        }
+
+        .endpoint-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .method {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 4px;
+            background: #dcfce7;
+            color: var(--green);
+        }
+
+        .path {
+            font-family: "SF Mono", "Fira Code", monospace;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .card-desc {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .chevron {
+            color: var(--muted);
+            font-size: 12px;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .chevron.open {
+            transform: rotate(180deg);
+        }
+
+        .card-body {
+            border-top: 1px solid var(--border);
+            padding: 16px 20px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card-body.open {
+            display: flex;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-row input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: "SF Mono", "Fira Code", monospace;
+            background: var(--code-bg);
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .input-row input:focus {
+            border-color: var(--accent);
+        }
+
+        .run-btn {
+            padding: 8px 16px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: opacity 0.15s;
+        }
+
+        .run-btn:hover {
+            opacity: 0.88;
+        }
+
+        .run-btn:active {
+            opacity: 0.75;
+        }
+
+        .run-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .response-box {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .response-box.visible {
+            display: flex;
+        }
+
+        .response-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+        }
+
+        .status-dot.error {
+            background: var(--red);
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 14px;
+            font-family: "SF Mono", "Fira Code", monospace;
+            font-size: 12px;
+            line-height: 1.7;
+            overflow-x: auto;
+            max-height: 320px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .base-url-note {
+            font-size: 12px;
+            color: var(--muted);
+            padding: 12px 16px;
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+
+        .base-url-note code {
+            font-family: "SF Mono", "Fira Code", monospace;
+            color: var(--text);
+        }
+
+        footer {
+            text-align: center;
+            padding: 32px;
+            font-size: 12px;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            margin-top: 24px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div>
+            <h1>Atmos <span>API</span></h1>
+            <p>Weather data + AI insights - no key required</p>
+        </div>
+        <span class="badge">v1.0</span>
+    </header>
+
+    <main>
+        <p class="section-label">Endpoints</p>
+
+        <div class="base-url-note">
+            Base URL: <code id="base-url"></code>
+        </div>
+
+        <!-- forecast -->
+        <div class="card">
+            <div class="card-header" onclick="toggle(this)">
+                <div class="card-meta">
+                    <div class="endpoint-line">
+                        <span class="method">GET</span>
+                        <span class="path">/api/forecast/:city</span>
+                    </div>
+                    <p class="card-desc">Current conditions + 7-day forecast for any city</p>
+                </div>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="card-body">
+                <div class="input-row">
+                    <input id="input-forecast" type="text" value="Nairobi" placeholder="City name" />
+                    <button class="run-btn" onclick="run('forecast')">Run</button>
+                </div>
+                <div class="response-box" id="res-forecast">
+                    <div class="response-meta">
+                        <span class="status-dot" id="dot-forecast"></span>
+                        <span id="meta-forecast"></span>
+                    </div>
+                    <pre id="pre-forecast"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- hourly -->
+        <div class="card">
+            <div class="card-header" onclick="toggle(this)">
+                <div class="card-meta">
+                    <div class="endpoint-line">
+                        <span class="method">GET</span>
+                        <span class="path">/api/forecast/:city/hourly</span>
+                    </div>
+                    <p class="card-desc">Next 24 hours broken down by hour</p>
+                </div>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="card-body">
+                <div class="input-row">
+                    <input id="input-hourly" type="text" value="Lagos" placeholder="City name" />
+                    <button class="run-btn" onclick="run('hourly')">Run</button>
+                </div>
+                <div class="response-box" id="res-hourly">
+                    <div class="response-meta">
+                        <span class="status-dot" id="dot-hourly"></span>
+                        <span id="meta-hourly"></span>
+                    </div>
+                    <pre id="pre-hourly"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- summary -->
+        <div class="card">
+            <div class="card-header" onclick="toggle(this)">
+                <div class="card-meta">
+                    <div class="endpoint-line">
+                        <span class="method">GET</span>
+                        <span class="path">/api/forecast/:city/summary</span>
+                    </div>
+                    <p class="card-desc">Gemini AI weather brief - supports <code>?format=json</code> or
+                        <code>?format=text</code></p>
+                </div>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="card-body">
+                <div class="input-row">
+                    <input id="input-summary-city" type="text" value="Cairo" placeholder="City name" />
+                    <input id="input-summary-format" type="text" value="json" placeholder="format: json or text"
+                        style="max-width:140px" />
+                    <button class="run-btn" onclick="run('summary')">Run</button>
+                </div>
+                <div class="response-box" id="res-summary">
+                    <div class="response-meta">
+                        <span class="status-dot" id="dot-summary"></span>
+                        <span id="meta-summary"></span>
+                    </div>
+                    <pre id="pre-summary"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- compare -->
+        <div class="card">
+            <div class="card-header" onclick="toggle(this)">
+                <div class="card-meta">
+                    <div class="endpoint-line">
+                        <span class="method">GET</span>
+                        <span class="path">/api/compare?cities=</span>
+                    </div>
+                    <p class="card-desc">Side-by-side comparison of up to 5 cities</p>
+                </div>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="card-body">
+                <div class="input-row">
+                    <input id="input-compare" type="text" value="Nairobi,Lagos,Accra"
+                        placeholder="Comma separated cities" />
+                    <button class="run-btn" onclick="run('compare')">Run</button>
+                </div>
+                <div class="response-box" id="res-compare">
+                    <div class="response-meta">
+                        <span class="status-dot" id="dot-compare"></span>
+                        <span id="meta-compare"></span>
+                    </div>
+                    <pre id="pre-compare"></pre>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer>
+        Built with Elysia + Bun · Weather data from Open-Meteo · AI by Google Gemini
+    </footer>
+
+    <script>
+        // set base url dynamically so it works on any host
+        document.getElementById("base-url").textContent = window.location.origin
+
+        function toggle(header) {
+            const body = header.nextElementSibling
+            const chevron = header.querySelector(".chevron")
+            const isOpen = body.classList.contains("open")
+            body.classList.toggle("open", !isOpen)
+            chevron.classList.toggle("open", !isOpen)
+        }
+
+        function buildUrl(endpoint) {
+            const base = window.location.origin
+            switch (endpoint) {
+                case "forecast": {
+                    const city = document.getElementById("input-forecast").value.trim()
+                    return `${base}/api/forecast/${encodeURIComponent(city)}`
+                }
+                case "hourly": {
+                    const city = document.getElementById("input-hourly").value.trim()
+                    return `${base}/api/forecast/${encodeURIComponent(city)}/hourly`
+                }
+                case "summary": {
+                    const city = document.getElementById("input-summary-city").value.trim()
+                    const format = document.getElementById("input-summary-format").value.trim() || "json"
+                    return `${base}/api/forecast/${encodeURIComponent(city)}/summary?format=${format}`
+                }
+                case "compare": {
+                    const cities = document.getElementById("input-compare").value.trim()
+                    return `${base}/api/compare?cities=${encodeURIComponent(cities)}`
+                }
+            }
+        }
+
+        async function run(endpoint) {
+            const btn = event.target
+            const box = document.getElementById(`res-${endpoint}`)
+            const pre = document.getElementById(`pre-${endpoint}`)
+            const meta = document.getElementById(`meta-${endpoint}`)
+            const dot = document.getElementById(`dot-${endpoint}`)
+
+            btn.disabled = true
+            btn.textContent = "..."
+            box.classList.add("visible")
+            pre.textContent = "Fetching..."
+
+            const url = buildUrl(endpoint)
+            const start = Date.now()
+
+            try {
+                const res = await fetch(url)
+                const data = await res.json()
+                const ms = Date.now() - start
+                const ok = res.ok
+
+                dot.className = `status-dot${ok ? "" : " error"}`
+                meta.textContent = `${res.status} · ${ms}ms · ${url}`
+                pre.textContent = JSON.stringify(data, null, 2)
+            } catch (err) {
+                dot.className = "status-dot error"
+                meta.textContent = "Request failed"
+                pre.textContent = err.message
+            } finally {
+                btn.disabled = false
+                btn.textContent = "Run"
+            }
+        }
+    </script>
+
+</body>
+
+</html>
