@@ -47,6 +47,7 @@ export interface WeatherData {
     timezone: string
     current: CurrentWeather
     daily: DailyForecast[]
+    hourly: HourlyForecast[]
     fetchedAt: string
 }
 
