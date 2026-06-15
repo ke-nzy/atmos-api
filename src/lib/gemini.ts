@@ -1,8 +1,11 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import type { WeatherData, WeatherSummaryJSON } from "../types/weather"
 
-const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-const model = client.getGenerativeModel({ model: "gemini-2.0-flash" })
+function getModel() {
+    const key = process.env.GEMINI_API_KEY
+    if (!key) throw new Error("GEMINI_API_KEY is not set")
+    return new GoogleGenerativeAI(key).getGenerativeModel({ model: "gemini-2.0-flash" })
+}
 
 function buildPrompt(weather: WeatherData): string {
     const { current, daily, location } = weather
@@ -56,6 +59,7 @@ export async function getSummary(weather: WeatherData, format: "text" | "json"):
     let parsed: WeatherSummaryJSON
 
     try {
+        const model = getModel()
         const timeout = new Promise<never>((_, reject) =>
             setTimeout(() => reject(new Error("Gemini request timed out after 10s")), 10000)
         )
