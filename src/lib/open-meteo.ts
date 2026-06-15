@@ -1,5 +1,6 @@
 import type { WeatherData, DailyForecast, HourlyForecast, GeocodingResult } from "../types/weather"
 import { resolveCode } from "./weather-codes"
+import { cache } from "./cache"
 
 const BASE = "https://api.open-meteo.com/v1/forecast"
 const GEO = "https://geocoding-api.open-meteo.com/v1/search"
@@ -43,10 +44,18 @@ interface OpenMeteoResponse {
 
 // takes a city name, returns coordinates
 export async function geocode(city: string): Promise<GeocodingResult | null> {
+    const key = `geo:${city.toLowerCase()}`
+    const cached = cache.get<GeocodingResult>(key)
+    if (cached) return cached
+
     const res = await fetch(`${GEO}?name=${encodeURIComponent(city)}&count=1&language=en&format=json`)
     const data = await res.json() as GeocodingResponse
     if (!data.results?.length) return null
-    return data.results[0] ?? null
+
+    const result = data.results[0] ?? null
+    if (result) cache.set(key, result, null) // coords don't change, cache forever
+
+    return result
 }
 
 // formats "2024-06-15T14:00" -> "2 PM"
@@ -60,6 +69,10 @@ function toTimeLabel(iso: string) {
 }
 
 export async function fetchWeather(lat: number, lon: number, locationName: string): Promise<WeatherData> {
+    const key = `weather:${lat},${lon}`
+    const cached = cache.get<WeatherData>(key)
+    if (cached) return cached
+
     const params = new URLSearchParams({
         latitude: lat.toString(),
         longitude: lon.toString(),
@@ -114,7 +127,7 @@ export async function fetchWeather(lat: number, lon: number, locationName: strin
         .filter((h) => new Date(h.time) >= new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours()))
         .slice(0, 24)
 
-    return {
+    const result: WeatherData = {
         location: locationName,
         latitude: raw.latitude,
         longitude: raw.longitude,
@@ -135,4 +148,7 @@ export async function fetchWeather(lat: number, lon: number, locationName: strin
         hourly,
         fetchedAt: new Date().toISOString(),
     }
+
+    cache.set(key, result, 600) // 10 minutes
+    return result
 }
