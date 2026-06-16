@@ -62,4 +62,4 @@ For a permanent cloud deployment, this would work perfectly on Railway [Railway]
 - Weather data is cached in-memory for 10 minutes, geocoding results cached indefinitely
 - Gemini summary falls back to a rule-based response if the API is unavailable or quota is exceeded (Which on the free tier, is fairly fast unfortunately)
 - All endpoints are fully typed end to end with TypeScript
-- First API call per city may take 10-16s depending on your network - subsequent calls are cached and return in under 20ms.
+- First API call per city may take 10-16s depending on your network - subsequent calls are cached and return in under 500ms.
